@@ -30,6 +30,7 @@ public class ApplicationConfig
         {
             configureRoutes(config, routes);
             configureSecurity(config, diContainer);
+            configureCors(config);
             configureExceptions(config);
             configureJackson(config, diContainer);
             configureLogger(config);
@@ -49,6 +50,7 @@ public class ApplicationConfig
         {
             configureRoutes(config, routes);
             configureSecurity(config, diContainer);
+            configureCors(config);
             configureExceptions(config);
             configureJackson(config, diContainer);
             configureLogger(config);
@@ -87,6 +89,30 @@ public class ApplicationConfig
     {
         config.routes.beforeMatched(diContainer.getSecurityController()::authenticate);
         config.routes.beforeMatched(diContainer.getSecurityController()::authorize);
+    }
+
+    private static void configureCors(JavalinConfig config)
+    {
+        boolean isProduction = System.getenv("DEPLOYED") != null;
+
+        config.bundledPlugins.enableCors(cors ->
+        {
+            cors.addRule(rule ->
+            {
+                if (isProduction)
+                {
+                    String allowedOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
+                    for (String origin : allowedOrigins.split(","))
+                    {
+                        rule.allowHost(origin.trim());
+                    }
+                }
+                else
+                {
+                    rule.anyHost();
+                }
+            });
+        });
     }
 
     private static void configureExceptions(JavalinConfig config)
